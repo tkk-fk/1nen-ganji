@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
 <title>一年生の漢字 フラッシュカード</title>
 
-<!-- フォールバック用（UI/本文=BIZ UDPGothic、教科書体が無い環境向けにBIZ UDMinchoも） -->
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDMincho:wght@400;700&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
@@ -14,24 +13,11 @@
     --accent:#2563eb; --accent-ink:#ffffff;
     --chip:#e5e7eb; --chip-on:#dbeafe; --chip-ring:#93c5fd;
     --radius:22px; --shadow:0 10px 30px rgba(0,0,0,.08);
-
-    /* フォントスタック */
     --ui-font-stack: "BIZ UDPGothic","Noto Sans JP",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
-    /* 教科書体優先（端末にある場合は自動適用） */
     --kyokasho-stack:
-      "UD Digi Kyokasho N-R",
-      "UD Digi Kyokasho N-B",
-      "UD デジタル 教科書体 N-R",
-      "UD デジタル 教科書体 N-B",
-      "Yu Kyokasho",
-      "YuKyokasho",
-      "YuKyokasho Yoko",
-      "Hiragino KyoKashotai W3",
-      "Hiragino KyoKashotai W6",
-      "BIZ UDMincho",        /* Webフォールバック（明朝） */
-      "Noto Serif JP",
-      "Noto Sans JP",
-      system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+      "UD Digi Kyokasho N-R","UD Digi Kyokasho N-B","UD デジタル 教科書体 N-R","UD デジタル 教科書体 N-B",
+      "Yu Kyokasho","YuKyokasho","YuKyokasho Yoko","Hiragino KyoKashotai W3","Hiragino KyoKashotai W6",
+      "BIZ UDMincho","Noto Serif JP","Noto Sans JP",system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -58,7 +44,6 @@
   .btn:disabled{ opacity:.5; cursor:not-allowed }
   .sep{ flex:1 }
 
-  /* 選択シート */
   .sheet{ position:fixed; inset:0; background:rgba(0,0,0,.28); display:none; align-items:flex-end; justify-content:center; }
   .sheet.show{ display:flex }
   .sheet-inner{
@@ -79,7 +64,6 @@
   .sheet-foot{ display:flex; gap:10px; margin-top:6px; }
   .ghost{ background:transparent; border:1px solid #cbd5e1 }
 
-  /* カード画面 */
   .card-wrap{ display:none; flex-direction:column; gap:10px; }
   .backlink{ background:transparent; border:none; color:var(--muted); align-self:flex-start; cursor:pointer; padding:6px 6px; }
   .card{
@@ -93,7 +77,7 @@
     font-family: var(--kyokasho-stack);
     font-size: clamp(80px, 22vw, 220px);
     line-height:1; letter-spacing: .02em;
-    font-feature-settings: "palt" 1; /* 字間整え（対応環境） */
+    font-feature-settings: "palt" 1;
   }
   .answer{
     min-width: 32%;
@@ -103,10 +87,7 @@
     font-family: var(--ui-font-stack);
   }
   .answer.show{ visibility: visible; color: var(--ink); }
-
   .controls{ display:flex; align-items:center; gap:8px; }
-
-  /* 一周終了の軽いオーバーレイ */
   .finish{
     position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     background:rgba(0,0,0,.12); z-index:50;
@@ -114,26 +95,27 @@
   .finish.show{ display:flex; animation: fade 1200ms ease; }
   .finish .box{
     background: var(--card); padding: 18px 22px; border-radius: 16px; box-shadow: var(--shadow);
-    font-weight:700; font-size: 20px;
-    font-family: var(--ui-font-stack);
+    font-weight:700; font-size: 20px; font-family: var(--ui-font-stack);
   }
   @keyframes fade{ 0%{opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{opacity:0} }
+
+  /* 送り仮名（括弧内）を赤表示 */
+  .okuri{ color:#e11d48; font-weight:700; }
 </style>
 </head>
 <body>
   <div class="app">
-    <!-- 設定パネル -->
     <div class="panel" id="setup">
       <div class="top" aria-hidden="true" style="justify-content:center; font-weight:700;">一年生の漢字 フラッシュカード</div>
       <div class="controls" style="justify-content:center;">
         <button class="btn switch" id="allBtn">ぜんぶ</button>
         <button class="btn switch" id="pickBtn">えらぶ</button>
+        <button class="btn switch" id="randomBtn">ランダム20問</button>
         <span class="sep"></span>
         <button class="btn primary" id="startBtn">スタート</button>
       </div>
     </div>
 
-    <!-- カード画面 -->
     <div class="card-wrap" id="play">
       <button class="backlink" id="backBtn">← もどる</button>
       <div class="card" id="card" role="button" aria-label="カードをタップ">
@@ -143,7 +125,6 @@
     </div>
   </div>
 
-  <!-- えらぶシート -->
   <div class="sheet" id="sheet" aria-modal="true" role="dialog">
     <div class="sheet-inner">
       <div class="sheet-head">
@@ -159,24 +140,105 @@
     </div>
   </div>
 
-  <!-- 一周終了メッセージ -->
   <div class="finish" id="finish">
     <div class="box">がんばったね😊</div>
   </div>
 
 <script>
-/* 小1配当（80字）と代表的な“よみ”（ひらがな） */
+/* 送り仮名を赤にするフォーマッタ */
+function formatReading(text){
+  if(!text) return "";
+  return text
+    .split("・")
+    .map(t => t.replace(/\(([^)]+)\)/g, '<span class="okuri">$1</span>'))
+    .join("・");
+}
+
+/* 小1配当（80字） */
 const KANJI_LIST = ["一","右","雨","円","王","音","下","火","花","貝","学","気","九","休","玉","金","空","月","犬","見","五","口","校","左","三","山","子","四","糸","字","耳","七","車","手","十","出","女","小","上","森","人","水","正","生","青","石","赤","千","川","先","早","草","足","村","大","男","竹","中","虫","町","天","田","土","二","日","入","年","白","八","百","文","木","本","名","目","夕","立","力","林","六"];
 
+/* 読み（括弧内が送り仮名） */
 const READINGS = {
-  "一":"いち・ひと","右":"みぎ","雨":"あめ","円":"えん・まる","王":"おう","音":"おと","下":"した","火":"ひ","花":"はな","貝":"かい",
-  "学":"がく・まなぶ","気":"き","九":"きゅう・く・ここの","休":"やすむ","玉":"たま","金":"きん・かね","空":"そら","月":"つき・がつ・げつ",
-  "犬":"いぬ","見":"みる","五":"ご・いつ","口":"くち","校":"こう","左":"ひだり","三":"さん・み","山":"やま","子":"こ","四":"し・よん・よ",
-  "糸":"いと","字":"じ","耳":"みみ","七":"しち・なな","車":"くるま","手":"て","十":"じゅう・とお","出":"でる・だす","女":"おんな","小":"ちいさい",
-  "上":"うえ・あがる","森":"もり","人":"ひと","水":"みず","正":"ただしい・せい","生":"いきる・うまれる・なま","青":"あお","石":"いし","赤":"あか","千":"せん・ち",
-  "川":"かわ","先":"さき","早":"はやい","草":"くさ","足":"あし・たす","村":"むら","大":"おおきい","男":"おとこ","竹":"たけ","中":"なか",
-  "虫":"むし","町":"まち","天":"てん","田":"た","土":"つち","二":"に・ふた","日":"ひ・にち","入":"いれる・はいる","年":"とし","白":"しろ",
-  "八":"はち・や","百":"ひゃく","文":"ぶん・もん・ふみ","木":"き","本":"ほん・もと","名":"な","目":"め","夕":"ゆう","立":"たつ","力":"ちから","林":"はやし","六":"ろく・む"
+  "一":"いち・ひと",          // 必要なら「ひと(つ)」に変更OK
+  "右":"みぎ",
+  "雨":"あめ",
+  "円":"えん・まる",
+  "王":"おう",
+  "音":"おと・おん",
+  "下":"した・か",
+  "火":"ひ・か",
+  "花":"はな・か",
+  "貝":"かい",
+  "学":"がく・まな(ぶ)",
+  "気":"き",
+  "九":"きゅう・く・ここの（つ）",
+  "休":"やす(む)・きゅう",
+  "玉":"たま",
+  "金":"きん・かね",
+  "空":"そら・くう",
+  "月":"つき・がつ・げつ",
+  "犬":"いぬ",
+  "見":"み(る)",
+  "五":"ご・いつ（つ）",
+  "口":"くち",
+  "校":"こう",
+  "左":"ひだり",
+  "三":"さん・み",
+  "山":"やま・さん",
+  "子":"こ",
+  "四":"し・よん・よ",
+  "糸":"いと",
+  "字":"じ",
+  "耳":"みみ",
+  "七":"しち・なな",
+  "車":"くるま",
+  "手":"て",
+  "十":"じゅう・とお",
+  "出":"で(る)・だ(す)",
+  "女":"おんな・じょ",
+  "小":"ちい(さい)",
+  "上":"うえ・あ(がる)",
+  "森":"もり",
+  "人":"ひと・じん",
+  "水":"みず・すい",
+  "正":"ただ(しい)・せい",
+  "生":"せい・い(きる)・う(まれる)・なま",
+  "青":"あお",
+  "石":"いし・せき",
+  "赤":"あか",
+  "千":"せん",
+  "川":"かわ",
+  "先":"さき・せん",
+  "早":"はや(い)・そう",
+  "草":"くさ・そう",
+  "足":"あし・た(す)",
+  "村":"むら・そん",
+  "大":"おお(きい)",
+  "男":"おとこ・だん",
+  "竹":"たけ",
+  "中":"なか・ちゅう",
+  "虫":"むし・ちゅう",
+  "町":"まち・ちょう",
+  "天":"てん",
+  "田":"た",
+  "土":"つち・ど",
+  "二":"に・ふた",
+  "日":"ひ・にち",
+  "入":"い(れる)・はい(る)",
+  "年":"とし・ねん",
+  "白":"しろ・はく",
+  "八":"はち・や",
+  "百":"ひゃく",
+  "文":"ぶん・もん・ふみ",
+  "木":"き",
+  "本":"ほん・もと",
+  "名":"な・めい",
+  "目":"め",
+  "夕":"ゆう",
+  "立":"た(つ)・りつ",
+  "力":"ちから・りょく",
+  "林":"はやし・りん",
+  "六":"ろく・む（っつ）"
 };
 
 /* 状態 */
@@ -191,6 +253,7 @@ const card = document.getElementById('card');
 
 const allBtn = document.getElementById('allBtn');
 const pickBtn = document.getElementById('pickBtn');
+const randomBtn = document.getElementById('randomBtn');
 const startBtn = document.getElementById('startBtn');
 const backBtn = document.getElementById('backBtn');
 
@@ -211,9 +274,15 @@ allBtn.addEventListener('click', ()=>{
   mode = 'all'; setActiveButtons(); flashPickToast(); updateStartEnable();
 });
 
-/* えらぶ（常に“全解除”で開く） */
+/* えらぶ（常に全解除で開く） */
 pickBtn.addEventListener('click', ()=>{
   mode = 'pick'; setActiveButtons(); openPicker();
+});
+
+/* ★ ランダム20問 */
+randomBtn.addEventListener('click', ()=>{
+  picked = sampleUnique(KANJI_LIST, 20);
+  mode = 'random20'; setActiveButtons(); flashPickToast(); updateStartEnable();
 });
 
 /* スタート */
@@ -225,13 +294,15 @@ startBtn.addEventListener('click', ()=>{
 /* もどる */
 backBtn.addEventListener('click', ()=>{ endAndReturn(); });
 
-/* カード：タップで「答え→次／終了」 */
-card.addEventListener('click', ()=>{
-  if(!showAns){ showAns = true; aEl.classList.add('show'); }
-  else{
-    if(idx + 1 >= order.length){ finishRound(); }
-    else{ idx++; showQuestion(); }
-  }
+/* カード：クリックで答え→次へ */
+card.addEventListener('click', nextOrReveal);
+
+/* ★ 矢印キー（→で答え→次へ、←でひとつ戻る） */
+window.addEventListener('keydown', (e)=>{
+  if (!isPlaying()) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') e.preventDefault();
+  if (e.key === 'ArrowRight') nextOrReveal();
+  if (e.key === 'ArrowLeft') prevOne();
 });
 
 /* ===== 選択シート ===== */
@@ -246,7 +317,7 @@ function openPicker(){
     });
     grid.appendChild(frag); grid.dataset.ready = '1';
   }
-  Array.from(grid.children).forEach(chip=> chip.classList.remove('on')); // 全解除で開く
+  Array.from(grid.children).forEach(chip=> chip.classList.remove('on'));
   sheet.classList.add('show'); document.body.style.overflow='hidden';
 }
 closeSheet.addEventListener('click', closePicker);
@@ -260,13 +331,23 @@ function closePicker(){ sheet.classList.remove('show'); document.body.style.over
 /* ===== 出題開始と表示 ===== */
 function begin(){
   order = picked.map(k => KANJI_LIST.indexOf(k)).filter(i=>i>=0);
+  if(mode === 'random20'){ shuffle(order); } // ランダム20問は順番もシャッフル
   idx = 0; setup.style.display = 'none'; play.style.display = 'flex'; showQuestion();
 }
 function showQuestion(){
   const k = KANJI_LIST[order[idx]];
   qEl.textContent = k;
-  aEl.textContent = READINGS[k] || "（よみ未設定）";
+  aEl.innerHTML = formatReading(READINGS[k] || "（よみ未設定）");
   showAns = false; aEl.classList.remove('show');
+}
+function nextOrReveal(){
+  if(!showAns){ showAns = true; aEl.classList.add('show'); return; }
+  if(idx + 1 >= order.length){ finishRound(); }
+  else{ idx++; showQuestion(); }
+}
+function prevOne(){
+  if(idx === 0) return;
+  idx--; showQuestion();
 }
 
 /* ===== 一周終了処理 ===== */
@@ -283,13 +364,32 @@ function endAndReturn(){
 function setActiveButtons(){
   allBtn.classList.toggle('active', mode==='all');
   pickBtn.classList.toggle('active', mode==='pick');
+  randomBtn.classList.toggle('active', mode==='random20');
 }
 
 /* ===== 小さなフィードバック ===== */
 function flashPickToast(){
-  allBtn.animate([{transform:'scale(1)'},{transform:'scale(1.05)'},{transform:'scale(1)'}],{duration:220});
+  (mode==='random20' ? randomBtn : allBtn).animate(
+    [{transform:'scale(1)'},{transform:'scale(1.05)'},{transform:'scale(1)'}],
+    {duration:220}
+  );
 }
 function updateStartEnable(){ startBtn.disabled = false; }
+
+/* ===== ユーティリティ ===== */
+function isPlaying(){ return play.style.display === 'flex'; }
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+function sampleUnique(source, n){
+  const copy = [...source];
+  shuffle(copy);
+  return copy.slice(0, Math.min(n, copy.length));
+}
 </script>
 </body>
 </html>
